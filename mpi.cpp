@@ -1,5 +1,6 @@
 #include "common.h"
 #include <cmath>
+#include <chrono>
 #include <mpi.h>
 #include <vector>
 #include <algorithm>
@@ -83,6 +84,7 @@ class Group {
 
 static int bn, gs, gw;
 static Group g;
+static double comp_time;
 
 void helper(int m, int n, int i, int& start, int& range) {
     int s = m / n;
@@ -190,6 +192,7 @@ void init_simulation(particle_t* parts, int num_parts, double size, int rank, in
 void simulate_one_step(particle_t* parts, int num_parts, double size, int rank, int num_procs) {
     if (rank >= gw * gs) return;
     transmit_edges();
+    auto start_time = std::chrono::steady_clock::now();
     for (int i = 0; i < g.m; i++) {
         for (int j = 0; j < g.n; j++) {
             vector<particle_t>& bin = g.bin(i, j);
@@ -251,7 +254,14 @@ void simulate_one_step(particle_t* parts, int num_parts, double size, int rank, 
     for (movement m : inter_moves) {
         g.bin(m.i, m.j).push_back(m.p);
     }
+    auto stop_time = std::chrono::steady_clock::now();
+    std::chrono::duration<double> diff = stop_time - start_time;
+    comp_time += diff.count();
     transmit_edges2();
+}
+
+void final_simulation(int rank) {
+    printf("Rank %i computation time: %f\n", rank, comp_time);
 }
 
 void gather_for_save(particle_t* parts, int num_parts, double size, int rank, int num_procs) {

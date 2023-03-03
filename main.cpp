@@ -168,6 +168,8 @@ int main(int argc, char** argv) {
 
     auto end_time = std::chrono::steady_clock::now();
 
+    final_simulation(rank);
+
     std::chrono::duration<double> diff = end_time - start_time;
     double seconds = diff.count();
 
